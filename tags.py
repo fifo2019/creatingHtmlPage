@@ -1,24 +1,38 @@
 class Tag:
-    def __init__(self, tag, is_single=False, *args, **kwargs):
+    def __init__(self, tag, parent=False, is_single=False, *args, **kwargs):
         self.tag = tag
         self.childern = []
         self.text = ""
-        self.attributes = {}
+        self.parent = parent
         self.is_single = is_single
         self.args = args
         self.kwargs = kwargs
 
     def __str__(self):
-        if self.kwargs.get('klass'):
-            # TODO: Поставить реализацию из TopLevelTag, а оттуда убрать
-            klass = self.kwargs.get('klass')
-            attrs = []
-            for value in klass:
-                attrs.append(f'{value}')
-            attrs = " ".join(attrs)
-            return f'\t<{self.tag} class="{attrs}">{self.text}</{self.tag}>'
-        elif self.is_single:
+        if self.kwargs:
+            # TODO: ОТЛАДИТЬ ТУТ - РАБОТАЕТ НЕ КОРРЕКТНО - ЗАТИРАЕТ ВЛОЖЕННЫЙ ТЕКСТ!!!!
             print(self.kwargs)
+            attrs = []
+            for attr in self.kwargs.keys():
+                if attr not in attrs:
+                    attrs.append(f' {attr}="')
+                    if type(self.kwargs.get(attr)) != str:
+                        attrs.append(' '.join(self.kwargs.get(attr)) + '"')
+                    else:
+                        attrs.append(self.kwargs.get(attr) + '"')
+            attrs = "".join(attrs).replace('klass', 'class')
+            element = []
+            for cild in self.childern:
+                element.append(f'\t\t{cild}\n')
+            element = ''.join(element)
+            return f'\t<{self.tag}{attrs}>\n{element}\t\t</{self.tag}>'
+        elif self.parent:
+            element = []
+            for cild in self.childern:
+                element.append(f'\t{cild}\n')
+            element = ''.join(element)
+            return f'\t<{self.tag}>\n{element}\t</{self.tag}>'
+        elif self.is_single:
             return f'\t<{self.tag}>'
         else:
             return f"\t<{self.tag}>{self.text}</{self.tag}>"
@@ -65,24 +79,6 @@ class HTML(Tag):
 
 
 class TopLevelTag(Tag):
-    def __str__(self):
-        if self.kwargs:
-            attrs = []
-            for attr in self.kwargs.keys():
-                if attr not in attrs:
-                    attrs.append(attr)
-                    for value in self.kwargs.get('attr'):
-            #             TODO: Доделать цикл чтобы сохранял в строку ключ и значение
+    def __init__(self, tag, parent=True, *args, **kwargs):
+        super().__init__(tag, parent, *args, **kwargs)
 
-            attrs = " ".join(attrs)
-            element = []
-            for cild in self.childern:
-                element.append(f'\t\t{cild}\n')
-            element = ''.join(element)
-            return f'\t<{self.tag} {attrs}>\n{element}\t\t</{self.tag}>'
-        else:
-            element = []
-            for cild in self.childern:
-                element.append(f'\t{cild}\n')
-            element = ''.join(element)
-            return f'\t<{self.tag}>\n{element}\t</{self.tag}>'
