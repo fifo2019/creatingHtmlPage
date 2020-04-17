@@ -9,24 +9,24 @@ def start_ontext_manager(user_anwser):
             with Tag("title") as title:
                 title.text = "hello"
                 head += title
-        doc += head
+            doc += head
 
         with TopLevelTag("body") as body:
             with Tag("h1", klass=("main-text",)) as h1:
                 h1.text = "Test"
                 body += h1
 
-        with TopLevelTag("div", klass=("container", "container-fluid"), id="lead") as div:
-            with Tag("p") as paragraph:
-                paragraph.text = "another test"
-                div += paragraph
+            with Tag("div", klass=("container", "container-fluid"), id="lead") as div:
+                with Tag("p") as paragraph:
+                    paragraph.text = "another test"
+                    div += paragraph
 
-            with Tag("img", is_single=True, src="/icon.png", data_image="responsive") as img:
-                div += img
+                with Tag("img", is_single=True, src="/icon.png", data_image="responsive") as img:
+                    div += img
 
-            body += div
+                body += div
 
-        doc += body
+            doc += body
 
 
 if __name__ == '__main__':

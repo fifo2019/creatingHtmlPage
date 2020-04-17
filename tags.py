@@ -1,16 +1,15 @@
 class Tag:
-    def __init__(self, tag, is_parent=False, is_single=False, *args, **kwargs):
+    def __init__(self, tag, is_single=False, *args, **kwargs):
         self.tag = tag
         self.childern = []
         self.text = ""
-        self.is_parent = is_parent
         self.is_single = is_single
         self.args = args
         self.kwargs = kwargs
 
     def __str__(self):
+        # Теги с атбрибутами
         if self.kwargs:
-            # Если в теги есть атрибуты
             attrs = []
             for attr in self.kwargs.keys():
                 if attr not in attrs:
@@ -24,32 +23,38 @@ class Tag:
                         attrs.append(self.kwargs.get(attr) + '"')
             # Собираем строку со всеми атрибутами и значениями для тега
             attrs = "".join(attrs).replace('klass', 'class')
+            # Заполняем теги атрибутами
             if self.is_single:
-                # Если тег одиночный
-                return f'\t<{self.tag}{attrs}/>'
-            if self.is_parent:
-                # Если тег является родителем
+                # Непарные теги с атрибутами
+                return f'<{self.tag}{attrs}/>'
+            else:
+                # Парные теги с атрибутами
+                if len(self.childern) > 0:
+                    # Если тег с атрибутами и имеет вложенные теги
+                    element = []
+                    for cild in self.childern:
+                        element.append(f'\n\t\t\t{cild}')
+                    element = ''.join(element)
+                    return f'<{self.tag}{attrs}>{element}\n\t\t</{self.tag}>'
+                else:
+                    # Если тег парный и с атрибутами
+                    return f'<{self.tag}{attrs}>{self.text}</{self.tag}>'
+        # Теги без атбрибутов
+        elif self.is_single:
+            # Непарные теги без атрибутов
+            return f'<{self.tag}/>'
+        else:
+            # Парные теги без атрибутов
+            # Если тег без атрибутов и имеет вложенные теги
+            if len(self.childern) > 0:
                 element = []
                 for cild in self.childern:
-                    element.append(f'\t{cild}\n')
-                element = '\t'.join(element)
-                return f'\t<{self.tag}{attrs}>\n\t{element}\t\t</{self.tag}>'
+                    element.append(f'\n\t\t\t{cild}')
+                element = ''.join(element)
+                return f'<{self.tag}>{element}\n\t\t</{self.tag}>'
             else:
-                # Если тег вложенный и с атрибутами
-                return f'\t<{self.tag}{attrs}>{self.text}</{self.tag}>'
-        elif self.is_single:
-            # Если тег одиночный и без атрибутов
-            return f'\t<{self.tag}/>'
-        elif self.is_parent:
-            # Если тег является родителем и без атрибутов
-            element = []
-            for cild in self.childern:
-                element.append(f'{cild}\n')
-            element = '\t'.join(element)
-            return f'\t<{self.tag}>\n\t{element}\t</{self.tag}>'
-        else:
-            # Если тег вложенный и без атрибутов
-            return f"\t<{self.tag}>{self.text}</{self.tag}>"
+                # Если тег парный и без атрибутов
+                return f"<{self.tag}>{self.text}</{self.tag}>"
 
     def __iadd__(self, other):
         self.childern.append(other)
@@ -68,30 +73,28 @@ class HTML(Tag):
         self.output = self.kwargs.get('output')
 
     def __str__(self):
-        element = [f'<{self.tag}>\n']
+        elements = []
         for cild in self.childern:
-            element.append(f'{cild}\n')
-        element.append(f'</{self.tag}>\n')
-        return ''.join(element)
+            elements.append(f'{cild}')
+        elements = ''.join(elements)
+        return f'<{self.tag}>\n{elements}</{self.tag}>'
 
     def __exit__(self, *args, **kwargs):
         if self.output == 'print':
             print(self)
         elif self.output is not None:
-            try:
-                with open(f'{self.output}.html', 'w', encoding='utf-8') as file:
-                    element = []
-                    for cild in self.childern:
-                        element.append(f'{cild}\n')
-                    element = ''.join(element)
-                    file.write(f'<{self.tag}>\n{element}</{self.tag}>\n')
-            except FileExistsError:
-                print('Файл с таким именем уже существует!')
+            with open(f'{self.output}.html', 'w', encoding='utf-8') as file:
+                file.write(f'{self}')
         else:
             print('Нет названия!')
 
 
 class TopLevelTag(Tag):
-    def __init__(self, tag, is_parent=True, *args, **kwargs):
-        super().__init__(tag, is_parent, *args, **kwargs)
+    def __str__(self):
+        elements = []
+        for cild in self.childern:
+            elements.append(f'\n\t\t{cild}')
+        elements = ''.join(elements)
+        return f'\t<{self.tag}>{elements}\n\t</{self.tag}>\n'
+
 
